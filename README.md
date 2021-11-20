@@ -1,5 +1,10 @@
 ## Market List
 
+#### Alunos: Éderson Vidal Junior e Eduardo Bido;
+#### Matéria: Tópicos Especiais - Flutter;
+#### Professor: Ricardo Ogliari;
+#### Curso de Ciência da Computação, na IMED-RS.
+#
 ### Aplicativo para auxiliar o usuário a fazer as compras de casa, com possíveis sugestões do que precisa ser comprado.
 
 Basicamente o software é composto por 5 opções:
