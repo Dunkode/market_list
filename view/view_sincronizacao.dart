@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,8 +23,11 @@ class _ViewSincronizacaoState extends State<ViewSincronizacao> {
         alignment: Alignment.bottomCenter,
         child: Column(
           children: [
-            Image.asset("img/sincronizar.png",height: 200,
-            width: 200,),
+            Image.asset(
+              "img/sincronizar.png",
+              height: 200,
+              width: 200,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -52,17 +53,28 @@ class _ViewSincronizacaoState extends State<ViewSincronizacao> {
 
   void sendProdutos() {
     FlutterFireConectionUtil ffcon = FlutterFireConectionUtil();
+    String mensagem = "Aguarde...";
+
+    showDialog(context: context, builder: (context) {
+      return AlertDialog(
+        title: Text("Resposta"),
+        content: Text(mensagem),
+      );
+    });
 
     ffcon.saveProdutosOnFireStore().then((response) {
+      Navigator.pop(context);
+      mensagem = response;
       return showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
               title: Text("Resposta"),
-              content: Text(response),
+              content: Text(mensagem),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(context), child: Text("OK"))
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("OK"))
               ],
             );
           });
@@ -71,8 +83,19 @@ class _ViewSincronizacaoState extends State<ViewSincronizacao> {
 
   void getProdutos() {
     FlutterFireConectionUtil ffcon = FlutterFireConectionUtil();
+    String mensagem = "Aguarde...";
+
+    showDialog(context: context, builder: (context) {
+      return AlertDialog(
+        title: Text("Resposta"),
+        content: Text(mensagem),
+      );
+    });
 
     ffcon.getProdutosToDB().then((response) {
+      Navigator.pop(context);
+      mensagem = response;
+
       return showDialog(
           context: context,
           builder: (context) {
@@ -81,7 +104,8 @@ class _ViewSincronizacaoState extends State<ViewSincronizacao> {
               content: Text(response),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(context), child: Text("OK"))
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("OK"))
               ],
             );
           });

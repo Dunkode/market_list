@@ -49,14 +49,16 @@ class _ViewProdutoState extends State<ViewListaGeral> {
               ))
         ],
       ),
-      body: ControllerQuantidadesProdutos == null ? LinearProgressIndicator() : ListView.separated(
-          padding: EdgeInsets.only(left: 30, right: 30),
-          itemBuilder: (context, index) =>
-              buildNumberInput(ControllerQuantidadesProdutos[index]),
-          separatorBuilder: (context, index) => Divider(
-                height: 40,
-              ),
-          itemCount: ControllerQuantidadesProdutos.length),
+      body: ControllerQuantidadesProdutos == null
+          ? LinearProgressIndicator()
+          : ListView.separated(
+              padding: EdgeInsets.only(left: 30, right: 30),
+              itemBuilder: (context, index) =>
+                  buildNumberInput(ControllerQuantidadesProdutos[index]),
+              separatorBuilder: (context, index) => Divider(
+                    height: 40,
+                  ),
+              itemCount: ControllerQuantidadesProdutos.length),
     );
   }
 
@@ -88,43 +90,45 @@ class _ViewProdutoState extends State<ViewListaGeral> {
     ]);
   }
 
-  ///Geradores das listas---------------------------------------
+  ///Inicialização da tela ---------------------------------------
 
   Future<void> _initializeTextControllers() async {
     List<Produto> produtosListaGeral = await dbCon.getProdutosCanBeInListaGeral();
 
-      for (Produto prod in produtosListaGeral){
+    if (produtosListaGeral.isNotEmpty) {
+      for (Produto prod in produtosListaGeral) {
         ListaGeral? lg = await dbCon.getListaGeralById(prod.id!);
 
-        if (lg != null){
-          ControllerQuantidadesProdutos.add(
-            ListaGeralController(
-                TextEditingController(), prod, lg.qtdDisponivel));
+        if (lg != null) {
+          ControllerQuantidadesProdutos.add(ListaGeralController(
+              TextEditingController(), prod, lg.qtdDisponivel));
         } else {
           ControllerQuantidadesProdutos.add(
-            ListaGeralController(
-                TextEditingController(), prod, 0));
+              ListaGeralController(TextEditingController(), prod, 0));
         }
       }
 
-    setState(() {});
+      setState(() {});
+    }
   }
+
+  ///Utilidades  -------------------------------------------------
 
   void _changeValorInserido(ListaGeralController controller, num lstNum) {
     controller.quantidadeDisponivel = int.parse("$lstNum");
   }
 
-  ///Utilidades  -------------------------------------------------
-
   Future<void> saveQuantitiesAvaliable() async {
 
-    for (ListaGeralController lgc in ControllerQuantidadesProdutos) {
-      ListaGeral lg = ListaGeral();
+    if (ControllerQuantidadesProdutos.isNotEmpty) {
+      for (ListaGeralController lgc in ControllerQuantidadesProdutos) {
+        ListaGeral lg = ListaGeral();
 
-      lg.idProduto = lgc.produto.id;
-      lg.qtdDisponivel = lgc.quantidadeDisponivel;
+        lg.idProduto = lgc.produto.id;
+        lg.qtdDisponivel = lgc.quantidadeDisponivel;
 
-      await dbCon.insertProdutoInListaGeral(lg);
+        await dbCon.insertProdutoInListaGeral(lg);
+      }
     }
   }
 
