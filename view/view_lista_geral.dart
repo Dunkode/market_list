@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:market_list/dao/database_conection_utils.dart';
 import 'package:market_list/model/lista_geral.dart';
+import 'package:market_list/model/lista_geral_controller.dart';
 import 'package:market_list/model/produto.dart';
 import 'package:number_inc_dec/number_inc_dec.dart';
 
@@ -18,14 +19,16 @@ class ViewListaGeral extends StatefulWidget {
 class _ViewProdutoState extends State<ViewListaGeral> {
   DatabaseConectionUtils dbCon = DatabaseConectionUtils();
 
-  List<Produto> produtos = [];
-  List<TextEditingController> textControlerList = [];
-  List<int> avaliableValuesList = [];
+  // List<Produto> produtos = [];
+  // List<TextEditingController> textControlerList = [];
+  // List<int> avaliableValuesList = [];
+
+  List<ListaGeralController> ControllerQuantidadesProdutos = [];
 
   @override
   void initState() {
     super.initState();
-    _getProdutosGeral();
+    _initializeTextControllers();
   }
 
   @override
@@ -46,114 +49,80 @@ class _ViewProdutoState extends State<ViewListaGeral> {
               ))
         ],
       ),
-      body: ListView.separated(
+      body: ControllerQuantidadesProdutos == null ? LinearProgressIndicator() : ListView.separated(
           padding: EdgeInsets.only(left: 30, right: 30),
           itemBuilder: (context, index) =>
-              buildNumberInput(produtos[index], textControlerList[index]),
+              buildNumberInput(ControllerQuantidadesProdutos[index]),
           separatorBuilder: (context, index) => Divider(
                 height: 40,
               ),
-          itemCount: produtos.length),
+          itemCount: ControllerQuantidadesProdutos.length),
     );
   }
 
-  Widget buildNumberInput(Produto prod, TextEditingController textControler) {
+  Widget buildNumberInput(ListaGeralController ControllerQuantidadeProduto) {
     return Column(children: [
       Text(
-        prod.nome,
+        ControllerQuantidadeProduto.produto.nome,
         textAlign: TextAlign.center,
         style: GoogleFonts.acme(fontSize: 30),
       ),
       NumberInputPrefabbed.roundedButtons(
-        controller: textControler,
+        controller: ControllerQuantidadeProduto.textController,
         incDecBgColor: Colors.greenAccent,
         decIcon: Icons.remove,
         incIcon: Icons.add,
         buttonArrangement: ButtonArrangement.incRightDecLeft,
         isInt: true,
-        initialValue: avaliableValuesList[produtos.indexOf(prod)],
+        initialValue: ControllerQuantidadeProduto.quantidadeDisponivel,
         onSubmitted: (num lastNumber) {
-          _changeValorInserido(produtos.indexOf(prod), lastNumber);
+          _changeValorInserido(ControllerQuantidadeProduto, lastNumber);
         },
         onIncrement: (num lastNumber) {
-          _changeValorInserido(produtos.indexOf(prod), lastNumber);
+          _changeValorInserido(ControllerQuantidadeProduto, lastNumber);
         },
         onDecrement: (num lastNumber) {
-          _changeValorInserido(produtos.indexOf(prod), lastNumber);
+          _changeValorInserido(ControllerQuantidadeProduto, lastNumber);
         },
       )
     ]);
   }
 
   ///Geradores das listas---------------------------------------
-  Future<void> _getProdutosGeral() async {
-    dbCon.getProdutosCanBeInListaGeral().then((list) async {
-      produtos = list;
 
-      _createTextControlerList();
-      await _generateListValuesAvaliable();
-      setState(() {});
-    });
-  }
+  Future<void> _initializeTextControllers() async {
+    List<Produto> produtosListaGeral = await dbCon.getProdutosCanBeInListaGeral();
 
-  void _changeValorInserido(int index, num lstNum) {
-    avaliableValuesList[index] = int.parse("$lstNum");
-  }
+      for (Produto prod in produtosListaGeral){
+        ListaGeral? lg = await dbCon.getListaGeralById(prod.id!);
 
-  void _createTextControlerList() {
-    textControlerList =
-        List.generate(produtos.length, (int index) => TextEditingController());
-  }
-
-  Future<void> _generateListValuesAvaliable() async {
-    var listaGeral = await dbCon.getListaGeral();
-    avaliableValuesList = List.generate(produtos.length, (index) => 0);
-
-    if (listaGeral.isNotEmpty) {
-      List<int> idsProdutos = [];
-
-      for (ListaGeral lg in listaGeral) {
-        idsProdutos.add(lg.idProduto!);
-      }
-
-      var produtosInListaGeral = await dbCon.getProdutos(idsProdutos);
-      var avaliableValuesFromProdutos =
-          await dbCon.getProdutosAndAvaliablesMap(idsProdutos);
-
-      for (Produto prod in produtosInListaGeral) {
-        int indexOfProdutoInList =
-            produtos.indexWhere((prodInList) => prodInList.id == prod.id);
-
-        if (indexOfProdutoInList != -1) {
-          int indexOfAvaliable = avaliableValuesFromProdutos
-              .indexWhere((map) => map["idProduto"] == prod.id);
-
-          avaliableValuesList[indexOfProdutoInList] =
-              avaliableValuesFromProdutos[indexOfAvaliable]["qtdDisponivel"];
+        if (lg != null){
+          ControllerQuantidadesProdutos.add(
+            ListaGeralController(
+                TextEditingController(), prod, lg.qtdDisponivel));
+        } else {
+          ControllerQuantidadesProdutos.add(
+            ListaGeralController(
+                TextEditingController(), prod, 0));
         }
       }
-    }
+
+    setState(() {});
+  }
+
+  void _changeValorInserido(ListaGeralController controller, num lstNum) {
+    controller.quantidadeDisponivel = int.parse("$lstNum");
   }
 
   ///Utilidades  -------------------------------------------------
 
   Future<void> saveQuantitiesAvaliable() async {
-    List<Map<String, dynamic>> ProdQuantity = [];
 
-    for (int i = 0; i < produtos.length; i++) {
-      Map<String, dynamic> map = {
-        "produto": produtos[i],
-        "qtd": avaliableValuesList[i],
-      };
-      ProdQuantity.add(map);
-    }
-
-    for (Map mapeado in ProdQuantity) {
+    for (ListaGeralController lgc in ControllerQuantidadesProdutos) {
       ListaGeral lg = ListaGeral();
-      Produto prod = mapeado["produto"];
 
-      lg.idProduto = prod.id;
-      lg.qtdDisponivel = mapeado["qtd"];
+      lg.idProduto = lgc.produto.id;
+      lg.qtdDisponivel = lgc.quantidadeDisponivel;
 
       await dbCon.insertProdutoInListaGeral(lg);
     }

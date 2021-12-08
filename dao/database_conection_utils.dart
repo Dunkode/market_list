@@ -39,7 +39,7 @@ class DatabaseConectionUtils {
                       );""");
       await db.execute("""CREATE TABLE listaGeral (
                         id INTEGER PRIMARY KEY,
-                        idProduto INTEGER nomeProduto TEXT,
+                        idProduto INTEGER,
                         qtdDisponivel INTEGER,
                         FOREIGN KEY (idProduto) REFERENCES produto(idProduto)
                       );""");
@@ -57,7 +57,14 @@ class DatabaseConectionUtils {
     return prod;
   }
 
-  Future<List<Produto>> getProdutos(List<int> idsProdutos) async {
+
+  Future<Produto> getProduto(int id) async{
+    Database dbSchema = await db;
+    List result = await dbSchema.query("produto", where: "idProduto = ?", whereArgs: [id]);
+    return new Produto.fromMap(result[0]);
+  }
+
+  Future<List<Produto>> getProdutosById(List<int> idsProdutos) async {
     Database dbSchema = await db;
     String idsToString = ajustIdListToString(idsProdutos);
 
@@ -145,6 +152,17 @@ class DatabaseConectionUtils {
       listWithTuples.add(tupla);
     }
     return listWithTuples;
+  }
+
+  Future <ListaGeral?> getListaGeralById(int id) async {
+    Database dbSchema = await db;
+    List retorno = await dbSchema.query("listaGeral", where: "idProduto = ?", whereArgs: [id]);
+
+    if (retorno.isNotEmpty){
+      return ListaGeral.fromMap(retorno[0]);
+    } else {
+      return null;
+    }
   }
 
   Future<List<ListaGeral>> getListaGeral() async {

@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:market_list/dao/database_conection_utils.dart';
 import 'package:market_list/model/produto.dart';
 
@@ -43,13 +41,12 @@ class FlutterFireConectionUtil {
 
   String sendProdutosToFirebase(
       List<Produto> produtos, CollectionReference<Object?> produtosOnFirebase) {
-    String message = "";
+    String message = "Produtos enviados com sucesso!!";
     for (Produto prod in produtos) {
       try {
         produtosOnFirebase.add(
             {"nome": prod.nome, "qtdRec": prod.qtdRec, "geral": prod.geral});
       } catch (e) {
-        message = "Ocorreu um erro: $e";
       }
       message = "Produtos enviados com sucesso!!";
     }
